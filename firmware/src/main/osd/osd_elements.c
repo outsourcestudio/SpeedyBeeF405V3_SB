@@ -420,9 +420,9 @@ void osdFormatDistanceString(char *ptr, int distance, char leadingSymbol)
     osdPrintFloat(ptr, leadingSymbol, displayDistance, "", decimalPlaces, false, displaySymbol);
 }
 
-static void osdFormatPID(char * buff, const char * label, const PIDSingle * pid)
+static void osdFormatPID(char * buff, const char * label, const pid_t * pid)
 {
-    tfp_sprintf(buff, "%s %3d %3d %3d", label, (int)(pid->kp), (int)(pid->ki), (int)(pid->kd));
+    tfp_sprintf(buff, "%s %3d %3d %3d", label, (int)(pid->pid_p_gain), (int)(pid->pid_i_gain), (int)(pid->pid_d_gain));
 }
 
 #ifdef USE_RTC_TIME
@@ -1226,17 +1226,17 @@ static void osdElementPidRateProfile(osdElementParms_t *element)
 
 static void osdElementPidsPitch(osdElementParms_t *element)
 {
-    osdFormatPID(element->buff, "RP_OUT", &roll.out);
+    osdFormatPID(element->buff, "pid", &pid);
 }
 
 static void osdElementPidsRoll(osdElementParms_t *element)
 {
-    osdFormatPID(element->buff, "RP_IN ", &roll.in);
+  osdFormatPID(element->buff, "pid", &pid);
 }
 
 static void osdElementPidsYaw(osdElementParms_t *element)
 {
-    osdFormatPID(element->buff, "YW_DEG", &yaw_heading);
+  osdFormatPID(element->buff, "pid", &pid);
 }
 
 static void osdElementPower(osdElementParms_t *element)

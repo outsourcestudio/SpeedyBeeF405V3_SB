@@ -18,7 +18,7 @@
 #include "flight/pid.h"
 
 const char *defaultSDCardConfigFilename = "config.ini";
-
+#ifdef USE_SDCARD
 static bool write_ini_roll_in(const char * ini_name)
 {
   void *dictionary;
@@ -602,4 +602,5 @@ bool readSDCard(void)
 
   return result;
 }
+#endif
 

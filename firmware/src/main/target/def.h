@@ -60,13 +60,13 @@
 #define USE_MAX7456
 #define USE_MOTOR
 
-#define USE_MAG
-#define USE_OPFLOW
-#define USE_OPFLOW_MSP
-#define USE_RANGEFINDER
-#define USE_RANGEFINDER_MSP
-#define USE_GPS
-#define USE_GPS_UBLOX
+//#define USE_MAG
+//#define USE_OPFLOW
+//#define USE_OPFLOW_MSP
+//#define USE_RANGEFINDER
+//#define USE_RANGEFINDER_MSP
+//#define USE_GPS
+//#define USE_GPS_UBLOX
 #define USE_CRSF_LINK_STATISTICS
 #define USE_RX_RSSI_DBM
 #define USE_RX_LINK_QUALITY_INFO

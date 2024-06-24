@@ -75,14 +75,14 @@ rssiSource_e rssiSource;
 linkQualitySource_e linkQualitySource;
 
 static bool rxDataProcessingRequired = false;
-static bool auxiliaryProcessingRequired = false;
+//static bool auxiliaryProcessingRequired = false;
 
 static bool rxSignalReceived = false;
-static bool rxFlightChannelsValid = false;
+//static bool rxFlightChannelsValid = false;
 static uint8_t rxChannelCount;
 
 static timeUs_t needRxSignalBefore = 0;
-static timeUs_t suspendRxSignalUntil = 0;
+//static timeUs_t suspendRxSignalUntil = 0;
 
 static float rcRaw[MAX_SUPPORTED_RC_CHANNEL_COUNT];     // last received raw value, as it comes
 uint16_t rcData[MAX_SUPPORTED_RC_CHANNEL_COUNT];           // scaled, modified, checked and constrained values
@@ -588,7 +588,7 @@ void processRxModes(uint32_t currentTimeUs)
 		if(rcData[THROTTLE] <1030)
 		{
 			ENABLE_ARMING_FLAG(ARMED);
-			yaw_heading_reference = (float)attitude.values.yaw/10;;
+			//yaw_heading_reference = (float)attitude.values.yaw/10;;
 #ifdef USE_PERSISTENT_STATS
 			 statsOnArm();
 #endif
@@ -636,12 +636,12 @@ void processRxModes(uint32_t currentTimeUs)
 
   if(rcData[SF] == 2000)
   {
-    writeSDCard(PID_Roll_in);
-    writeSDCard(PID_Roll_out);
-    writeSDCard(PID_pitch_in);
-    writeSDCard(PID_pitch_out);
-    writeSDCard(PID_yaw_heading);
-    writeSDCard(PID_yaw_rate);
+    //writeSDCard(PID_Roll_in);
+    //writeSDCard(PID_Roll_out);
+    //writeSDCard(PID_pitch_in);
+    //writeSDCard(PID_pitch_out);
+    //writeSDCard(PID_yaw_heading);
+    //writeSDCard(PID_yaw_rate);
   }
 }
 

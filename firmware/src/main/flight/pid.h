@@ -29,57 +29,48 @@
 #include "common/time.h"
 #include "common/axis.h"
 
- typedef struct pidf_s {
-     uint8_t P;
-     uint8_t I;
-     uint8_t D;
-     uint16_t F;
- } pidf_t;
+typedef struct pid_s {
+  bool start;
 
-typedef struct _PIDSingle
-{
-	float kp;
-	float ki;
-	float kd;
-	
-	float reference;
-	float meas_value;
-	float meas_value_prev;
-	float error;
-	float error_sum;
-	float error_deriv;
-	float error_deriv_filt;
-	
-	float p_result;
-	float i_result;
-	float d_result;
-	
-	float pid_result;
-}PIDSingle;
+  float pid_p_gain;
+  float pid_i_gain;
+  float pid_d_gain;
 
-typedef struct _PIDDouble
-{
-	PIDSingle in;
-	PIDSingle out;
-}PIDDouble;
+  float self_balance_pid_setpoint;
+  float pid_setpoint;
 
 
-extern PIDDouble roll;
-extern PIDDouble pitch;
-extern PIDSingle yaw_heading;
-extern PIDSingle yaw_rate;
+  float pid_error_temp;
+  float pid_i_mem;
+  float pid_output;
+  float pid_last_d_error;
+
+  float pid_output_left;
+  float pid_output_right;
+
+  float turning_speed;
+  float max_target_speed;
+
+  int left_motor;
+  int right_motor;
+
+  int throttle_left_motor;
+  int throttle_right_motor;
+} pid_t;
 
 
-void Double_Roll_Pitch_PID_Calculation(PIDDouble* axis, float set_point_angle, float angle, float rate, float DT);
-void Single_Yaw_Rate_PID_Calculation(PIDSingle* axis, float set_point, float value, float DT);
-void Single_Yaw_Heading_PID_Calculation(PIDSingle* axis, float set_point, float angle, float rate, float DT);
-void Reset_PID_Integrator(PIDSingle* axis);
+extern pid_t pid;
+
+
+
+void PID_Calculation(float set_point_angle, float angle, float rate);
+
+
+void Reset_PID_Integrator(pid_t* axis);
 void Reset_All_PID_Integrator(void);
 
 void pidInit(void);
 void taskMainPidLoop(timeUs_t currentTimeUs);
-
-extern float yaw_heading_reference;
 
 #ifdef __cplusplus
 }

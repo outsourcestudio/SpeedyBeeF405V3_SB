@@ -240,102 +240,102 @@ void processRcStickPositions()
 
         bool shouldApplyRollAndPitchTrimDelta = false;
         switch (rcSticks) {
-        case THR_CE + YAW_LO + PIT_HI + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = 1;
-            roll.out.kp += 1;
-            pitch.out.kp += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_LO + PIT_LO + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = -1;
-            roll.out.kp -= 1;
-            pitch.out.kp -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_LO + PIT_CE + ROL_HI:
-            //accelerometerTrimsDelta.values.roll = 1;
-            roll.out.ki += 1;
-            pitch.out.ki += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_LO + PIT_CE + ROL_LO:
-            //accelerometerTrimsDelta.values.roll = -1;
-            roll.out.ki -= 1;
-            pitch.out.ki -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-
-
-        case THR_HI + YAW_CE + PIT_HI + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = 1;
-            roll.in.kp += 1;
-            pitch.in.kp += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_HI + YAW_CE + PIT_LO + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = -1;
-            roll.in.kp -= 1;
-            pitch.in.kp -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_HI + YAW_CE + PIT_CE + ROL_HI:
-            //accelerometerTrimsDelta.values.roll = 1;
-            roll.in.ki += 1;
-            pitch.in.ki += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_HI + YAW_CE + PIT_CE + ROL_LO:
-            //accelerometerTrimsDelta.values.roll = -1;
-            roll.in.ki -= 1;
-            pitch.in.ki -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-
-        case THR_CE + YAW_HI + PIT_HI + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = 1;
-            yaw_heading.kp += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_HI + PIT_LO + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = -1;
-            yaw_heading.kp -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_HI + PIT_CE + ROL_HI:
-            //accelerometerTrimsDelta.values.roll = 1;
-            yaw_heading.ki += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_HI + PIT_CE + ROL_LO:
-            //accelerometerTrimsDelta.values.roll = -1;
-            yaw_heading.ki -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-
-        case THR_CE + YAW_CE + PIT_HI + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = 1;
-            roll.out.kd += 1;
-            pitch.out.kd += 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_CE + PIT_LO + ROL_CE:
-            //accelerometerTrimsDelta.values.pitch = -1;
-            roll.out.kd -= 1;
-            pitch.out.kd -= 1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_CE + PIT_CE + ROL_HI:
-            //accelerometerTrimsDelta.values.roll = 1;
-            roll.in.kd += 0.1;
-            pitch.in.kd += 0.1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
-        case THR_CE + YAW_CE + PIT_CE + ROL_LO:
-            //accelerometerTrimsDelta.values.roll = -1;
-            roll.in.kd -= 0.1;
-            pitch.in.kd -= 0.1;
-            shouldApplyRollAndPitchTrimDelta = true;
-            break;
+//        case THR_CE + YAW_LO + PIT_HI + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = 1;
+//            roll.out.kp += 1;
+//            pitch.out.kp += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_LO + PIT_LO + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = -1;
+//            roll.out.kp -= 1;
+//            pitch.out.kp -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_LO + PIT_CE + ROL_HI:
+//            //accelerometerTrimsDelta.values.roll = 1;
+//            roll.out.ki += 1;
+//            pitch.out.ki += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_LO + PIT_CE + ROL_LO:
+//            //accelerometerTrimsDelta.values.roll = -1;
+//            roll.out.ki -= 1;
+//            pitch.out.ki -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//
+//
+//        case THR_HI + YAW_CE + PIT_HI + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = 1;
+//            roll.in.kp += 1;
+//            pitch.in.kp += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_HI + YAW_CE + PIT_LO + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = -1;
+//            roll.in.kp -= 1;
+//            pitch.in.kp -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_HI + YAW_CE + PIT_CE + ROL_HI:
+//            //accelerometerTrimsDelta.values.roll = 1;
+//            roll.in.ki += 1;
+//            pitch.in.ki += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_HI + YAW_CE + PIT_CE + ROL_LO:
+//            //accelerometerTrimsDelta.values.roll = -1;
+//            roll.in.ki -= 1;
+//            pitch.in.ki -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//
+//        case THR_CE + YAW_HI + PIT_HI + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = 1;
+//            yaw_heading.kp += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_HI + PIT_LO + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = -1;
+//            yaw_heading.kp -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_HI + PIT_CE + ROL_HI:
+//            //accelerometerTrimsDelta.values.roll = 1;
+//            yaw_heading.ki += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_HI + PIT_CE + ROL_LO:
+//            //accelerometerTrimsDelta.values.roll = -1;
+//            yaw_heading.ki -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//
+//        case THR_CE + YAW_CE + PIT_HI + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = 1;
+//            roll.out.kd += 1;
+//            pitch.out.kd += 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_CE + PIT_LO + ROL_CE:
+//            //accelerometerTrimsDelta.values.pitch = -1;
+//            roll.out.kd -= 1;
+//            pitch.out.kd -= 1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_CE + PIT_CE + ROL_HI:
+//            //accelerometerTrimsDelta.values.roll = 1;
+//            roll.in.kd += 0.1;
+//            pitch.in.kd += 0.1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
+//        case THR_CE + YAW_CE + PIT_CE + ROL_LO:
+//            //accelerometerTrimsDelta.values.roll = -1;
+//            roll.in.kd -= 0.1;
+//            pitch.in.kd -= 0.1;
+//            shouldApplyRollAndPitchTrimDelta = true;
+//            break;
 
         }
         if (shouldApplyRollAndPitchTrimDelta) {
