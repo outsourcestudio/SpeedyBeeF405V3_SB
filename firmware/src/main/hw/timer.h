@@ -12,20 +12,12 @@
 
 #ifdef _USE_HW_TIMER
 
-//#include "drivers/pwm_output.h"
-
-extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim5;
-
-typedef enum {
-    TIMER_OUTPUT_NONE      = 0,
-    TIMER_OUTPUT_INVERTED  = (1 << 0),
-    TIMER_OUTPUT_N_CHANNEL = (1 << 1),
-} timerFlag_e;
-
-//bool timerInit(pwmOutputPort_t *motors, uint32_t hz, uint16_t period, uint16_t value, uint8_t inversion);
+extern TIM_HandleTypeDef htim6;
 
 #endif
 bool timerInit(void);
+
+void timAttachInterrupt(void (*func)());
 
 #endif /* SRC_COMMON_HW_INCLUDE_TIMER_H_ */

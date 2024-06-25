@@ -40,7 +40,7 @@
 #define      HW_SPI_MAX_CH          3
 
 #define _USE_HW_GPIO
-#define      HW_GPIO_MAX_CH         5
+#define      HW_GPIO_MAX_CH         9
 
 
 #define _USE_HW_LED

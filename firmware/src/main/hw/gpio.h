@@ -20,6 +20,13 @@ enum
 {
 	BMI270_CS,
 	BMI270_INT,
+	PINIO,
+	SDCARD_CS,
+	MAX7456_CS,
+  Step_left_DIR,
+  Step_left_STEP,
+  Step_right_DIR,
+  Step_right_STEP,
 };
 
 

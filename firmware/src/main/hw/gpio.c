@@ -28,6 +28,10 @@ const gpio_tbl_t gpio_tbl[GPIO_MAX_CH] =
 	{GPIOC, GPIO_PIN_3,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW},     // 2. PINIO
 	{GPIOA, GPIO_PIN_15, _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_HIGH},    // 3. SDCARD  CS
 	{GPIOB, GPIO_PIN_12, _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_HIGH},    // 4. MAX7456 CS
+  {GPIOB, GPIO_PIN_6,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 5. Step_left_DIR
+  {GPIOB, GPIO_PIN_7,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 6. Step_left_STEP
+  {GPIOB, GPIO_PIN_8,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 7. Step_right_DIR
+  {GPIOB, GPIO_PIN_9,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 8. Step_right_STEP
 };
 
 

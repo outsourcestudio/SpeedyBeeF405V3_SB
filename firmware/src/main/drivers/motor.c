@@ -38,13 +38,6 @@
 
 motorConfig_t motorConfig;
 
-unsigned short LF, LR, RR, RF;
-
-//TIM4->CCR1 // RR
-//TIM4->CCR2 // RF
-//TIM4->CCR3 // LR
-//TIM4->CCR4 // LF
-
 //ROLL
 //angle : +, gyro : +, rx : +
 
@@ -54,6 +47,12 @@ unsigned short LF, LR, RR, RF;
 //YAW
 //angle : +, gyro : -, rx : +  //gyro mul negative sign
 
+static void TimerCallbackISR(void)
+{
+  gpioPinToggle(Step_left_STEP);
+  gpioPinToggle(Step_right_STEP);
+}
+
 void motorConfig_Init(void)
 {
   motorConfig.minthrottle = 1070;
@@ -61,6 +60,8 @@ void motorConfig_Init(void)
   motorConfig.mincommand = 1000;
   motorConfig.digitalIdleOffsetValue = 550;
   motorConfig.motorPoleCount = 14;   // Most brushes motors that we use are 14 poles
+
+  timAttachInterrupt(TimerCallbackISR);
 }
 
 void motorShutdown(void)
@@ -78,29 +79,29 @@ void motorWriteAll(void)
     pid.pid_output_left = pid.pid_output;                                             //Copy the controller output to the pid_output_left variable for the left motor
     pid.pid_output_right = pid.pid_output;                                            //Copy the controller output to the pid_output_right variable for the right motor
 
-    if(received_byte & B00000001){                                            //If the first bit of the receive byte is set change the left and right variable to turn the robot to the left
-      pid.pid_output_left += pid.turning_speed;                                       //Increase the left motor speed
-      pid.pid_output_right -= pid.turning_speed;                                      //Decrease the right motor speed
-    }
-    if(received_byte & B00000010){                                            //If the second bit of the receive byte is set change the left and right variable to turn the robot to the right
-      pid.pid_output_left -= pid.turning_speed;                                       //Decrease the left motor speed
-      pid.pid_output_right += pid.turning_speed;                                      //Increase the right motor speed
-    }
-
-    if(received_byte & B00000100){                                            //If the third bit of the receive byte is set change the left and right variable to turn the robot to the right
-      if(pid.pid_setpoint > -2.5)pid.pid_setpoint -= 0.05;                            //Slowly change the setpoint angle so the robot starts leaning forewards
-      if(pid.pid_output > pid.max_target_speed * -1)pid.pid_setpoint -= 0.005;            //Slowly change the setpoint angle so the robot starts leaning forewards
-    }
-    if(received_byte & B00001000){                                            //If the forth bit of the receive byte is set change the left and right variable to turn the robot to the right
-      if(pid.pid_setpoint < 2.5)pid.pid_setpoint += 0.05;                             //Slowly change the setpoint angle so the robot starts leaning backwards
-      if(pid.pid_output < pid.max_target_speed)pid.pid_setpoint += 0.005;                 //Slowly change the setpoint angle so the robot starts leaning backwards
-    }
-
-    if(!(received_byte & B00001100)){                                         //Slowly reduce the setpoint to zero if no foreward or backward command is given
-      if(pid.pid_setpoint > 0.5)pid.pid_setpoint -=0.05;                              //If the PID setpoint is larger then 0.5 reduce the setpoint with 0.05 every loop
-      else if(pid.pid_setpoint < -0.5)pid.pid_setpoint +=0.05;                        //If the PID setpoint is smaller then -0.5 increase the setpoint with 0.05 every loop
-      else pid.pid_setpoint = 0;                                                  //If the PID setpoint is smaller then 0.5 or larger then -0.5 set the setpoint to 0
-    }
+//    if(received_byte & B00000001){                                            //If the first bit of the receive byte is set change the left and right variable to turn the robot to the left
+//      pid.pid_output_left += pid.turning_speed;                                       //Increase the left motor speed
+//      pid.pid_output_right -= pid.turning_speed;                                      //Decrease the right motor speed
+//    }
+//    if(received_byte & B00000010){                                            //If the second bit of the receive byte is set change the left and right variable to turn the robot to the right
+//      pid.pid_output_left -= pid.turning_speed;                                       //Decrease the left motor speed
+//      pid.pid_output_right += pid.turning_speed;                                      //Increase the right motor speed
+//    }
+//
+//    if(received_byte & B00000100){                                            //If the third bit of the receive byte is set change the left and right variable to turn the robot to the right
+//      if(pid.pid_setpoint > -2.5)pid.pid_setpoint -= 0.05;                            //Slowly change the setpoint angle so the robot starts leaning forewards
+//      if(pid.pid_output > pid.max_target_speed * -1)pid.pid_setpoint -= 0.005;            //Slowly change the setpoint angle so the robot starts leaning forewards
+//    }
+//    if(received_byte & B00001000){                                            //If the forth bit of the receive byte is set change the left and right variable to turn the robot to the right
+//      if(pid.pid_setpoint < 2.5)pid.pid_setpoint += 0.05;                             //Slowly change the setpoint angle so the robot starts leaning backwards
+//      if(pid.pid_output < pid.max_target_speed)pid.pid_setpoint += 0.005;                 //Slowly change the setpoint angle so the robot starts leaning backwards
+//    }
+//
+//    if(!(received_byte & B00001100)){                                         //Slowly reduce the setpoint to zero if no foreward or backward command is given
+//      if(pid.pid_setpoint > 0.5)pid.pid_setpoint -=0.05;                              //If the PID setpoint is larger then 0.5 reduce the setpoint with 0.05 every loop
+//      else if(pid.pid_setpoint < -0.5)pid.pid_setpoint +=0.05;                        //If the PID setpoint is smaller then -0.5 increase the setpoint with 0.05 every loop
+//      else pid.pid_setpoint = 0;                                                  //If the PID setpoint is smaller then 0.5 or larger then -0.5 set the setpoint to 0
+//    }
 
     //The self balancing point is adjusted when there is not forward or backwards movement from the transmitter. This way the robot will always find it's balancing point
     if(pid.pid_setpoint == 0){                                                    //If the setpoint is zero degrees
