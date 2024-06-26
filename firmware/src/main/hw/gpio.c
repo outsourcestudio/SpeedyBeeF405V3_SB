@@ -32,6 +32,8 @@ const gpio_tbl_t gpio_tbl[GPIO_MAX_CH] =
   {GPIOB, GPIO_PIN_7,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 6. Step_left_STEP
   {GPIOB, GPIO_PIN_8,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 7. Step_right_DIR
   {GPIOB, GPIO_PIN_9,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_LOW },    // 8. Step_right_STEP
+  {GPIOB, GPIO_PIN_0,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_HIGH},    // 9. Step_left_EN
+  {GPIOB, GPIO_PIN_1,  _DEF_OUTPUT,          GPIO_PIN_SET,   GPIO_PIN_RESET, _DEF_HIGH},    //10. Step_right_EN
 };
 
 

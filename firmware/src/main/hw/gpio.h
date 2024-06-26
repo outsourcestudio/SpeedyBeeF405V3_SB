@@ -27,6 +27,8 @@ enum
   Step_left_STEP,
   Step_right_DIR,
   Step_right_STEP,
+  Step_left_EN,
+  Step_right_EN,
 };
 
 
