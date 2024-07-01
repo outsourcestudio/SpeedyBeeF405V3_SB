@@ -37,8 +37,15 @@ typedef struct motorConfig_s {
 
 extern motorConfig_t motorConfig;
 
+extern int16_t motor[2];
+extern int16_t actualMotorSpeed[2];     // actual speed of motors
+extern uint8_t actualMotorDir[2];       // actual direction of steppers motors
+extern int16_t actualSpeed;     // actual speed of robot
+
 
 void motorConfig_Init(void);
+
+void setMotorSpeed(uint8_t motorNum, int16_t speed);
 
 void motorWriteAll(void);
 void motorDisable(void);

@@ -27,6 +27,7 @@
 #include "adc.h"
 #include "rtc.h"
 #include "dma.h"
+#include "stepper.h"
 
 
 void hwInit(void);

@@ -23,6 +23,9 @@
 */
 
 #include "pid.h"
+
+#include "config/config.h"
+
 #include "sensors/gyro.h"
 #include "flight/imu.h"
 #include "fc/rc_controls.h"
@@ -37,32 +40,12 @@ pid_t pid;
 
 void PID_Calculation(float set_point_angle, float angle/*BNO080 Rotation Angle*/, float rate/*ICM-20602 Angular Rate*/)
 {
-  pid.pid_error_temp = rate - pid.self_balance_pid_setpoint - pid.pid_setpoint;
-  if(pid.pid_output > 10 || pid.pid_output < -10)pid.pid_error_temp += pid.pid_output * 0.015 ;
 
-  pid.pid_i_mem += pid.pid_i_gain * pid.pid_error_temp;                                 //Calculate the I-controller value and add it to the pid_i_mem variable
-  if(pid.pid_i_mem > 400)pid.pid_i_mem = 400;                                       //Limit the I-controller to the maximum controller output
-  else if(pid.pid_i_mem < -400)pid.pid_i_mem = -400;
-  //Calculate the PID output value
-  pid.pid_output = pid.pid_p_gain * pid.pid_error_temp + pid.pid_i_mem + pid.pid_d_gain * (pid.pid_error_temp - pid.pid_last_d_error);
-  if(pid.pid_output > 400)pid.pid_output = 400;                                     //Limit the PI-controller to the maximum controller output
-  else if(pid.pid_output < -400)pid.pid_output = -400;
-
-  pid.pid_last_d_error = pid.pid_error_temp;                                        //Store the error for the next loop
-
-  if(pid.pid_output < 5 && pid.pid_output > -5)pid.pid_output = 0;                      //Create a dead-band to stop the motors when the robot is balanced
-
-  if(rate > 30 || rate < -30 || pid.start == 0){    //If the robot tips over or the start variable is zero or the battery is empty
-    pid.pid_output = 0;                             //Set the PID controller output to 0 so the motors stop moving
-    pid.pid_i_mem = 0;                              //Reset the I-controller memory
-    pid.start = 0;                                  //Set the start variable to 0
-    pid.self_balance_pid_setpoint = 0;              //Reset the self_balance_pid_setpoint variable
-  }
 }
 
 void Reset_PID_Integrator(pid_t * axis)
 {
-	axis->pid_i_mem = 0;
+
 }
 
 void Reset_All_PID_Integrator(void)
@@ -72,46 +55,153 @@ void Reset_All_PID_Integrator(void)
 
 void pidInit(void)
 {
-  pid.pid_p_gain = 15;
-  pid.pid_i_gain = 1.5;
-  pid.pid_d_gain = 30;
+  pid.POSHOLD_P = 2.0f;
+
+  pid.pid[PIDSPEED].P8    = 80;   pid.pid[PIDSPEED].I8    = 0; pid.pid[PIDSPEED].D8    =  0;
+  pid.pid[PIDANGLE].P8    = 40;   pid.pid[PIDANGLE].I8    = 0; pid.pid[PIDANGLE].D8    = 30;
+
+
+  pid.pid[PIDPOS].P8  = pid.POSHOLD_P * 100;
 }
 
+int16_t targetSpeed;
+int16_t steering;
 
+int16_t acceleration_tmp;
+
+int16_t outputSpeed;
+uint32_t cycleTime;
+
+float speed_tmp = 0.0f;
 
 // Function for loop trigger
 void taskMainPidLoop(timeUs_t currentTimeUs)
 {
-	float imu_pitch;
+  int16_t imu_pitch;
+  int16_t error;
+  static int16_t angleErrorI = 0, speedErrorI = 0;
 
-	imu_pitch = (float)attitude.values.pitch/10;
+	imu_pitch = (int16_t)attitude.values.pitch;
 
   static timeUs_t previousUpdateTimeUs;
-  const float dT = US2S(currentTimeUs - previousUpdateTimeUs);
+  cycleTime = currentTimeUs - previousUpdateTimeUs;
   previousUpdateTimeUs = currentTimeUs;
 
-  PID_Calculation(rcCommand[PITCH], imu_pitch, bmi270.gyroADCf[Y]);
+  //PID_Calculation(rcCommand[PITCH], imu_pitch, bmi270.gyroADCf[Y]);
 
-  if(rcData[THROTTLE] < 1030 || !ARMING_FLAG(ARMED))
-  {
-	  Reset_All_PID_Integrator();
+  //***********************************//
+  //****       BalancingWii       *****//
+  //***********************************//
+
+  /****************** PI_speed + PD_angle regulator *****************/
+  targetSpeed = constrain(rcCommand[PITCH], -MAX_SPEED, MAX_SPEED);
+  steering = constrain((int)rcCommand[ROLL]>>2, -MAX_STEERING, MAX_STEERING);
+  steering = FLIGHT_MODE(SIMPLE_MODE) ? (steering*2/3) : steering;
+
+  actualSpeed = (actualMotorSpeed[1] - actualMotorSpeed[0])/2;  // Positive: forward
+
+
+  /**** position hold mode ****/
+  static float positionError = 0.0f;
+  if(FLIGHT_MODE(POSHOLD_MODE) && abs(targetSpeed) < 15 && abs(steering) < 15) {
+    positionError += actualSpeed * (float)cycleTime * 0.000001f;
+  } else {
+    positionError = 0.0f;
   }
 
-  if(rcData[YAW] < 1485 || rcData[YAW] > 1515)
-  {
 
-	  //LF = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 - pitch.in.pid_result + roll.in.pid_result - yaw_rate.pid_result;
-	  //LR = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 + pitch.in.pid_result + roll.in.pid_result + yaw_rate.pid_result;
-	  //RR = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 + pitch.in.pid_result - roll.in.pid_result - yaw_rate.pid_result;
-	  //RF = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 - pitch.in.pid_result - roll.in.pid_result + yaw_rate.pid_result;
-  }
-  else
-  {
-	  //LF = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 - pitch.in.pid_result + roll.in.pid_result - yaw_heading.pid_result;
-	  //LR = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 + pitch.in.pid_result + roll.in.pid_result + yaw_heading.pid_result;
-	  //RR = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 + pitch.in.pid_result - roll.in.pid_result - yaw_heading.pid_result;
-	  //RF = 10500 + 500 + (rcData[THROTTLE] - 1000) * 10 - pitch.in.pid_result - roll.in.pid_result + yaw_heading.pid_result;
+  /**** PI_speed regulator ****/
+  static float actualAveragedSpeed = 0.0f;
+  actualAveragedSpeed = actualAveragedSpeed * 0.92f + (float)actualSpeed * 0.08f;
+  error = targetSpeed - actualAveragedSpeed -(positionError * pid.pid[PIDPOS].P8 * 0.01f);  //16 bits is ok here
+
+  speedErrorI = constrain(speedErrorI + (int16_t)(((int32_t)error * cycleTime)>>11), -20000, 20000);    //16 bits is ok here
+
+  int16_t maxTargetAngle = FLIGHT_MODE(SIMPLE_MODE) ? (MAX_TARGET_ANGLE*2/3) : MAX_TARGET_ANGLE;
+
+  int16_t targetAngle = // PTerm + ITerm
+        (((int32_t)error * pid.pid[PIDSPEED].P8)>>7)           // 32 bits is needed for calculation: angleError*P8 could exceed 32768   16 bits is ok for result
+        + constrain( (((int32_t)speedErrorI * pid.pid[PIDSPEED].I8)>>14), -maxTargetAngle/6, maxTargetAngle/6);   // 32 bits is needed for calculation:10000*I8 could exceed 32768   16 bits is ok for result
+
+  targetAngle = constrain(targetAngle, -maxTargetAngle, maxTargetAngle);
+
+
+  /**** PD_angle regulator ****/
+  int16_t currAngle = imu_pitch;// + conf.angleTrim[CURRENT_AXIS];
+  #ifdef INVERT_CURRENT_AXIS
+    currAngle = -currAngle;
+  #endif
+  int16_t angleError =  targetAngle - currAngle; //16 bits is ok here
+
+  acceleration_tmp = // PTerm - DTerm
+        (((int32_t)angleError * pid.pid[PIDANGLE].P8)>>4)                      // 32 bits is needed for calculation: error*P8 could exceed 32768   16 bits is ok for result
+        - (((int32_t)bmi270.gyroADCf[Y] * pid.pid[PIDANGLE].D8)>>5);     // 32 bits is needed for calculation
+
+  //static float speed = 0.0f;
+  speed_tmp = constrain(speed_tmp + ((float)acceleration_tmp * (float)cycleTime * 0.000001f), -MAX_SPEED, MAX_SPEED);
+
+
+  /**** rise mode ****/
+
+  #define MAX_RISE_SPEED    140
+  #define MAX_REVERSED_RISE_SPEED 100
+
+  static uint8_t risePhase = 2; // to prevent rising without switching off before
+  float dynK = 0.0f;
+  if(ARMING_FLAG(ARMED)) {
+    int16_t currAbsAngle = abs(currAngle);
+    if(currAbsAngle < 250) {  // if angle less than 25 degree
+      dynK = 1.0f;
+
+    } else if(currAbsAngle < 800) { // help to rise with less speed but more torque
+      dynK = (1000.0f - currAbsAngle) / 1000.0f + 0.08f;
+      risePhase = 2; // to prevent rising without switching off before
+
+    } else {
+      dynK = 1.0f;
+
+      if(FLIGHT_MODE(RISE_MODE)) { // if robot fell, use it to auto rise! ;)
+        static float riseSpeed = 0;
+        if(risePhase == 0) { // get direct acceleration
+          riseSpeed = constrain(riseSpeed + (0.7f * RISE_SPEED_K), 0, MAX_RISE_SPEED);
+          speed_tmp = (currAngle > 0) ? riseSpeed : -riseSpeed; // forward direction
+          if(riseSpeed >= MAX_RISE_SPEED) {
+            riseSpeed = 0.0f; // force stop (it will throw up the robot) and prepare for next phase in reverse
+            risePhase = 1;
+          }
+        } else if(risePhase == 1) { // get reversed acceleration to rise
+          riseSpeed = constrain(riseSpeed + (0.85f * RISE_SPEED_K), 0, MAX_REVERSED_RISE_SPEED);
+          speed_tmp = (currAngle > 0) ? -riseSpeed : riseSpeed; // backward direction
+          if(riseSpeed >= MAX_REVERSED_RISE_SPEED) {
+            risePhase = 2;
+          }
+        } else if(risePhase == 2) { // prepare for the next rise
+          riseSpeed = 0.0f;
+          speed_tmp = 0.0f;
+        }
+        steering = 0; // to prevent turning during auto rising
+
+      } else { // if manual mode for rising
+        speed_tmp = constrain(-targetSpeed/2, -MAX_SPEED/2, MAX_SPEED/2);
+        steering = (abs(targetSpeed) < 100) ? steering/2 : 0; // to prevent turning during acceleration
+        risePhase = 0; // reset rise phase
+      }
+    }
+
+  } else { // turn off the motors
+    speed_tmp = 0.0f;
+    steering = 0;
+    risePhase = 2; // to prevent rising without switching off before
   }
 
-  motorWriteAll();
+  outputSpeed = constrain(speed_tmp * dynK, -MAX_SPEED, MAX_SPEED); ;
+
+  // to don't lost a control on big speeds and not overlimit the MAX_SPEED
+  if((abs(outputSpeed) + abs(steering)) > MAX_SPEED) {
+    outputSpeed = (outputSpeed > 0) ? (MAX_SPEED - abs(steering)) : (-MAX_SPEED + abs(steering));
+  }
+
+  // apply both motor speed
+  setMotorSpeed(0, outputSpeed + steering);    // right motor
+  setMotorSpeed(1, -outputSpeed + steering);   // left motor
 }

@@ -278,7 +278,7 @@ static void updateRcCommands(void)
     for (int axis = 0; axis < 3; axis++) {
         // non coupled PID reduction scaler used in PID controller 1 and PID controller 2.
 
-        float tmp = MIN(ABS((rcData[axis] - rxConfig.midrc) * 0.1f), 50);
+        float tmp = MIN(ABS((rcData[axis] - rxConfig.midrc)), 500);
         if (axis == ROLL || axis == PITCH) {
             if (tmp > rcControlsConfig.deadband) {
                 tmp -= rcControlsConfig.deadband;
@@ -624,6 +624,33 @@ void processRxModes(uint32_t currentTimeUs)
   else
   {
     DISABLE_FLIGHT_MODE(HEADFREE_MODE);
+  }
+
+  if(rcData[SD] == 2000)
+  {
+    ENABLE_FLIGHT_MODE(SIMPLE_MODE);
+  }
+  else
+  {
+    DISABLE_FLIGHT_MODE(SIMPLE_MODE);
+  }
+
+  if(rcData[SC] >= 1400)
+  {
+    ENABLE_FLIGHT_MODE(POSHOLD_MODE);
+  }
+  else
+  {
+    DISABLE_FLIGHT_MODE(POSHOLD_MODE);
+  }
+
+  if(rcData[SB] >= 1400)
+  {
+    ENABLE_FLIGHT_MODE(RISE_MODE);
+  }
+  else
+  {
+    DISABLE_FLIGHT_MODE(RISE_MODE);
   }
 
   if (!ARMING_FLAG(ARMED))

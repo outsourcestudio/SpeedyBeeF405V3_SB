@@ -26,6 +26,8 @@
 
 #include "hw.h"
 
+#include "config/config.h"
+
 #include "common/maths.h"
 
 #include "fc/runtime_config.h"
@@ -38,19 +40,133 @@
 
 motorConfig_t motorConfig;
 
-//ROLL
-//angle : +, gyro : +, rx : +
+uint8_t DRIVER_PIN[5] = {5,6,7,8,4};   //STEP1 (PORTD 5), STEP2 (PORTD 6), DIR1 (PORTD 7), DIR2 (PORTB 0), ENABLE
 
-//PITCH
-//angle : +, gyro : +, rx : +
+// *************************
+// motor and servo functions
+// *************************
+//int16_t output;
+int16_t motor[2];
+//int16_t servo[8] = {1500,1500,1500,1500,1500,1500,1500,1000};
 
-//YAW
-//angle : +, gyro : -, rx : +  //gyro mul negative sign
+int16_t actualMotorSpeed[2];     // actual speed of motors
+uint8_t actualMotorDir[2];       // actual direction of steppers motors
+
+int16_t actualSpeed;     // actual speed of robot
+
+/**************************************************************************************/
+/************  Calculate and writes the motors values                ******************/
+/**************************************************************************************/
+
+uint16_t periodsCounter[2];      // counters for periods
+uint16_t subPeriod[2][8];        // eight subperiodPaddings
+uint8_t subPeriodIndex[2];       // index for subperiodPaddings
+
+#define ZERO_SPEED  65535
+#define MAX_ACCEL   4
+
+
+// Divided into 8 sub-periods to increase the resolution at high speeds (short periods)
+// subperiodPadding = ((1000 % vel)*8)/vel;
+void calculateSubperiods(uint8_t motor) {
+
+  uint8_t subperiodPadding;
+  uint16_t absSpeed;
+  uint8_t i;
+
+  if (actualMotorSpeed[motor] == 0) {
+    for (i=0; i<8; i++) {
+      subPeriod[motor][i] = ZERO_SPEED;
+    }
+    return;
+  }
+
+  #ifdef REVERSE_MOTORS_DIRECTION
+    actualMotorDir[motor] = (actualMotorSpeed[motor] > 0) ? 1 : 0;
+  #else
+    actualMotorDir[motor] = (actualMotorSpeed[motor] > 0) ? 0 : 1;
+  #endif
+
+  absSpeed = abs(actualMotorSpeed[motor]);
+
+  subPeriod[motor][0] = 1000/absSpeed;
+  for (i=1; i<8; i++) {
+    subPeriod[motor][i] = subPeriod[motor][0];
+  }
+  // Calculate the sub-period padding.
+  subperiodPadding = ((1000 % absSpeed)*8)/absSpeed;
+  if (subperiodPadding > 0) {
+    subPeriod[motor][1]++;
+  }
+  if (subperiodPadding > 1) {
+    subPeriod[motor][5]++;
+  }
+  if (subperiodPadding > 2) {
+    subPeriod[motor][3]++;
+  }
+  if (subperiodPadding > 3) {
+    subPeriod[motor][7]++;
+  }
+  if (subperiodPadding > 4) {
+    subPeriod[motor][0]++;
+  }
+  if (subperiodPadding > 5) {
+    subPeriod[motor][4]++;
+  }
+  if (subperiodPadding > 6) {
+    subPeriod[motor][2]++;
+  }
+}
 
 static void TimerCallbackISR(void)
 {
-  gpioPinToggle(Step_left_STEP);
-  gpioPinToggle(Step_right_STEP);
+  periodsCounter[0]++;
+  periodsCounter[1]++;
+
+  if (periodsCounter[0] >= subPeriod[0][subPeriodIndex[0]]) {
+    periodsCounter[0] = 0;
+
+    if (subPeriod[0][0] != ZERO_SPEED) {
+      if (actualMotorDir[0]) {
+        gpioPinWrite(Step_left_DIR, _DEF_HIGH);
+        //SET(PORTD,7);  // DIR Motor 1
+      } else {
+        gpioPinWrite(Step_left_DIR, _DEF_LOW);
+        //CLR(PORTD,7);
+      }
+      // We need to wait at lest 200ns to generate the Step pulse...
+      subPeriodIndex[0] = (subPeriodIndex[0]+1)&0x07; // subPeriodIndex from 0 to 7
+
+      gpioPinWrite(Step_left_STEP, _DEF_HIGH);
+      //SET(PORTD,5); // STEP Motor 1
+      delayMicroseconds(1);
+      gpioPinWrite(Step_left_STEP, _DEF_LOW);
+      //CLR(PORTD,5);
+    }
+  }
+
+  if (periodsCounter[1] >= subPeriod[1][subPeriodIndex[1]]) {
+    periodsCounter[1] = 0;
+
+    if (subPeriod[1][0] != ZERO_SPEED) {
+
+      if (actualMotorDir[1]) {
+        gpioPinWrite(Step_right_DIR, _DEF_HIGH);
+        //SET(PORTB,0);   // DIR Motor 2
+      } else {
+        gpioPinWrite(Step_right_DIR, _DEF_LOW);
+        //CLR(PORTB,0);
+      }
+      subPeriodIndex[1] = (subPeriodIndex[1]+1)&0x07;
+
+      gpioPinWrite(Step_right_STEP, _DEF_HIGH);
+      //SET(PORTD,6); // STEP Motor 1
+      delayMicroseconds(1);
+      gpioPinWrite(Step_right_STEP, _DEF_LOW);
+      //CLR(PORTD,6);
+    }
+  }
+
 }
 
 void motorConfig_Init(void)
@@ -64,6 +180,32 @@ void motorConfig_Init(void)
   timAttachInterrupt(TimerCallbackISR);
 }
 
+void setMotorSpeed(uint8_t motorNum, int16_t speed) {
+
+  speed = constrain(speed, -MAX_SPEED, MAX_SPEED);
+
+  // LIMIT MAX ACCELERATION
+  int16_t acceleration = speed - actualMotorSpeed[motorNum];
+  if (acceleration > MAX_ACCEL) {
+    actualMotorSpeed[motorNum] += MAX_ACCEL;
+  } else if (acceleration < -MAX_ACCEL) {
+    actualMotorSpeed[motorNum] -= MAX_ACCEL;
+  } else {
+    actualMotorSpeed[motorNum] = speed;
+  }
+
+  calculateSubperiods(motorNum);  // We use four subperiodPaddings to increase resolution
+
+  // To save energy when its not running...
+  if ((actualMotorSpeed[0] == 0) && (actualMotorSpeed[1] == 0)) {
+    gpioPinWrite(Step_left_EN, _DEF_HIGH);   // Disable motors
+    gpioPinWrite(Step_right_EN, _DEF_HIGH);   // Disable motors
+  } else {
+    gpioPinWrite(Step_left_EN, _DEF_LOW);   // Disable motors
+    gpioPinWrite(Step_right_EN, _DEF_LOW);   // Disable motors
+  }
+}
+
 void motorShutdown(void)
 {
 
@@ -73,64 +215,7 @@ void motorWriteAll(void)
 {
   if(ARMING_FLAG(ARMED))
   {
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Control calculations
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    pid.pid_output_left = pid.pid_output;                                             //Copy the controller output to the pid_output_left variable for the left motor
-    pid.pid_output_right = pid.pid_output;                                            //Copy the controller output to the pid_output_right variable for the right motor
 
-//    if(received_byte & B00000001){                                            //If the first bit of the receive byte is set change the left and right variable to turn the robot to the left
-//      pid.pid_output_left += pid.turning_speed;                                       //Increase the left motor speed
-//      pid.pid_output_right -= pid.turning_speed;                                      //Decrease the right motor speed
-//    }
-//    if(received_byte & B00000010){                                            //If the second bit of the receive byte is set change the left and right variable to turn the robot to the right
-//      pid.pid_output_left -= pid.turning_speed;                                       //Decrease the left motor speed
-//      pid.pid_output_right += pid.turning_speed;                                      //Increase the right motor speed
-//    }
-//
-//    if(received_byte & B00000100){                                            //If the third bit of the receive byte is set change the left and right variable to turn the robot to the right
-//      if(pid.pid_setpoint > -2.5)pid.pid_setpoint -= 0.05;                            //Slowly change the setpoint angle so the robot starts leaning forewards
-//      if(pid.pid_output > pid.max_target_speed * -1)pid.pid_setpoint -= 0.005;            //Slowly change the setpoint angle so the robot starts leaning forewards
-//    }
-//    if(received_byte & B00001000){                                            //If the forth bit of the receive byte is set change the left and right variable to turn the robot to the right
-//      if(pid.pid_setpoint < 2.5)pid.pid_setpoint += 0.05;                             //Slowly change the setpoint angle so the robot starts leaning backwards
-//      if(pid.pid_output < pid.max_target_speed)pid.pid_setpoint += 0.005;                 //Slowly change the setpoint angle so the robot starts leaning backwards
-//    }
-//
-//    if(!(received_byte & B00001100)){                                         //Slowly reduce the setpoint to zero if no foreward or backward command is given
-//      if(pid.pid_setpoint > 0.5)pid.pid_setpoint -=0.05;                              //If the PID setpoint is larger then 0.5 reduce the setpoint with 0.05 every loop
-//      else if(pid.pid_setpoint < -0.5)pid.pid_setpoint +=0.05;                        //If the PID setpoint is smaller then -0.5 increase the setpoint with 0.05 every loop
-//      else pid.pid_setpoint = 0;                                                  //If the PID setpoint is smaller then 0.5 or larger then -0.5 set the setpoint to 0
-//    }
-
-    //The self balancing point is adjusted when there is not forward or backwards movement from the transmitter. This way the robot will always find it's balancing point
-    if(pid.pid_setpoint == 0){                                                    //If the setpoint is zero degrees
-      if(pid.pid_output < 0)pid.self_balance_pid_setpoint += 0.0015;                  //Increase the self_balance_pid_setpoint if the robot is still moving forewards
-      if(pid.pid_output > 0)pid.self_balance_pid_setpoint -= 0.0015;                  //Decrease the self_balance_pid_setpoint if the robot is still moving backwards
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Motor pulse calculations
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //To compensate for the non-linear behaviour of the stepper motors the folowing calculations are needed to get a linear speed behaviour.
-    if(pid.pid_output_left > 0)pid.pid_output_left = 405 - (1/(pid.pid_output_left + 9)) * 5500;
-    else if(pid.pid_output_left < 0)pid.pid_output_left = -405 - (1/(pid.pid_output_left - 9)) * 5500;
-
-    if(pid.pid_output_right > 0)pid.pid_output_right = 405 - (1/(pid.pid_output_right + 9)) * 5500;
-    else if(pid.pid_output_right < 0)pid.pid_output_right = -405 - (1/(pid.pid_output_right - 9)) * 5500;
-
-    //Calculate the needed pulse time for the left and right stepper motor controllers
-    if(pid.pid_output_left > 0)pid.left_motor = 400 - pid.pid_output_left;
-    else if(pid.pid_output_left < 0)pid.left_motor = -400 - pid.pid_output_left;
-    else pid.left_motor = 0;
-
-    if(pid.pid_output_right > 0)pid.right_motor = 400 - pid.pid_output_right;
-    else if(pid.pid_output_right < 0)pid.right_motor = -400 - pid.pid_output_right;
-    else pid.right_motor = 0;
-
-    //Copy the pulse time to the throttle variables so the interrupt subroutine can use them
-    pid.throttle_left_motor = pid.left_motor;
-    pid.throttle_right_motor = pid.right_motor;
   }
 }
 

@@ -29,33 +29,32 @@
 #include "common/time.h"
 #include "common/axis.h"
 
+enum pid {
+  PIDSPEED,
+  //PIDROLL
+  PIDPITCH,
+  PIDYAW,
+  PIDALT,
+  PIDPOS,
+  PIDPOSR,
+  PIDNAVR,
+  PIDANGLE,
+  PIDMAG,
+  PIDVEL,     // not used currently
+  PIDITEMS
+};
+
+typedef struct pid_ {
+  uint8_t P8;
+  uint8_t I8;
+  uint8_t D8;
+} pid__t;
+
 typedef struct pid_s {
-  bool start;
+  pid__t pid[PIDITEMS];
 
-  float pid_p_gain;
-  float pid_i_gain;
-  float pid_d_gain;
+  float POSHOLD_P;
 
-  float self_balance_pid_setpoint;
-  float pid_setpoint;
-
-
-  float pid_error_temp;
-  float pid_i_mem;
-  float pid_output;
-  float pid_last_d_error;
-
-  float pid_output_left;
-  float pid_output_right;
-
-  float turning_speed;
-  float max_target_speed;
-
-  int left_motor;
-  int right_motor;
-
-  int throttle_left_motor;
-  int throttle_right_motor;
 } pid_t;
 
 

@@ -22,13 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "scheduler/tasks.h"
-//
-//#include "config/config.h"
-//
+
 #include "fc/init.h"
-//#include "fc/rc_modes.h"
-//#include "fc/rc_controls.h"
-//#include "fc/core.h"
 //
 #include "flight/imu.h"
 //#include "flight/pid_init.h"
@@ -48,111 +43,35 @@
 #include "rx/rx.h"
 #include "rx/crsf.h"
 
+AccelStepper stepper_left;
 
-/* USER CODE END Includes */
+AccelStepper stepper_right;
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 void hwInit(void);
 
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
-  //cycleCounterInit();
 
-  /* USER CODE BEGIN SysInit */
   hwInit();
 
-//  TIM4->CCR1 = 21000;
-//  TIM4->CCR2 = 21000;
-//  TIM4->CCR3 = 21000;
-//  TIM4->CCR4 = 21000;
-//  HAL_Delay(7000);
-//  TIM4->CCR1 = 10500;
-//  TIM4->CCR2 = 10500;
-//  TIM4->CCR3 = 10500;
-//  TIM4->CCR4 = 10500;
-//  HAL_Delay(8000);
+//  stepper_Init(&stepper_left, Step_left_EN, Step_left_DIR, Step_left_STEP);
+//  setMaxSpeed(&stepper_left, 50000);
+//  setAcceleration(&stepper_left, 500);
+//  moveTo(&stepper_left, 800);
 
   init();
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-//  MX_GPIO_Init();
-//  MX_DMA_Init();
-//  MX_USB_DEVICE_Init();
-//  MX_TIM4_Init();
-//  MX_I2C2_Init();
-//  MX_SPI1_Init();
-//  MX_SPI2_Init();
-//  MX_USART2_UART_Init();
-//  MX_USART6_UART_Init();
-//  MX_USART3_UART_Init();
-//  MX_UART4_Init();
-//  MX_UART5_Init();
-//  MX_USART1_UART_Init();
-//  MX_FATFS_Init();
-//  MX_ADC1_Init();
-//  MX_RTC_Init();
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
 
   while (1)
   {
 	  scheduler();
   }
-  /* USER CODE END 3 */
+
 }
 
 void hwInit(void)

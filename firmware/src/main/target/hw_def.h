@@ -58,8 +58,6 @@
 
 #define _PIN_GPIO_SDCARD_DETECT     0
 
-
-
 #ifndef M_PI
 #define M_PI       3.14159265358979323846f
 #endif /* M_PI */
