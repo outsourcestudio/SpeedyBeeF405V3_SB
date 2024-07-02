@@ -619,14 +619,14 @@ void processRxModes(uint32_t currentTimeUs)
 
   if(rcData[SA] == 2000)
   {
-    ENABLE_FLIGHT_MODE(HEADFREE_MODE);
+    ENABLE_FLIGHT_MODE(RISE_MODE);
   }
   else
   {
-    DISABLE_FLIGHT_MODE(HEADFREE_MODE);
+    DISABLE_FLIGHT_MODE(RISE_MODE);
   }
 
-  if(rcData[SD] == 2000)
+  if(rcData[SB] >= 1400)
   {
     ENABLE_FLIGHT_MODE(SIMPLE_MODE);
   }
@@ -635,22 +635,22 @@ void processRxModes(uint32_t currentTimeUs)
     DISABLE_FLIGHT_MODE(SIMPLE_MODE);
   }
 
-  if(rcData[SC] >= 1400)
+//  if(rcData[SC] >= 1400)
+//  {
+//    ENABLE_FLIGHT_MODE(SIMPLE_MODE);
+//  }
+//  else
+//  {
+//    DISABLE_FLIGHT_MODE(SIMPLE_MODE);
+//  }
+
+  if(rcData[SD] == 2000)
   {
     ENABLE_FLIGHT_MODE(POSHOLD_MODE);
   }
   else
   {
     DISABLE_FLIGHT_MODE(POSHOLD_MODE);
-  }
-
-  if(rcData[SB] >= 1400)
-  {
-    ENABLE_FLIGHT_MODE(RISE_MODE);
-  }
-  else
-  {
-    DISABLE_FLIGHT_MODE(RISE_MODE);
   }
 
   if (!ARMING_FLAG(ARMED))

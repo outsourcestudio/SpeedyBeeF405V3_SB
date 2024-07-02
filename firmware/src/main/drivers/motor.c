@@ -64,6 +64,7 @@ uint8_t subPeriodIndex[2];       // index for subperiodPaddings
 
 #define ZERO_SPEED  65535
 #define MAX_ACCEL   4
+#define REVERSE_MOTORS_DIRECTION
 
 
 // Divided into 8 sub-periods to increase the resolution at high speeds (short periods)
@@ -201,8 +202,8 @@ void setMotorSpeed(uint8_t motorNum, int16_t speed) {
     gpioPinWrite(Step_left_EN, _DEF_HIGH);   // Disable motors
     gpioPinWrite(Step_right_EN, _DEF_HIGH);   // Disable motors
   } else {
-    gpioPinWrite(Step_left_EN, _DEF_LOW);   // Disable motors
-    gpioPinWrite(Step_right_EN, _DEF_LOW);   // Disable motors
+    gpioPinWrite(Step_left_EN, _DEF_LOW);   // Enable motors
+    gpioPinWrite(Step_right_EN, _DEF_LOW);   // Enable motors
   }
 }
 

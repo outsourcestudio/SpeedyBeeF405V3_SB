@@ -64,15 +64,7 @@ void pidInit(void)
   pid.pid[PIDPOS].P8  = pid.POSHOLD_P * 100;
 }
 
-int16_t targetSpeed;
-int16_t steering;
-
-int16_t acceleration_tmp;
-
-int16_t outputSpeed;
-uint32_t cycleTime;
-
-float speed_tmp = 0.0f;
+#define INVERT_CURRENT_AXIS
 
 // Function for loop trigger
 void taskMainPidLoop(timeUs_t currentTimeUs)
@@ -84,7 +76,7 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
 	imu_pitch = (int16_t)attitude.values.pitch;
 
   static timeUs_t previousUpdateTimeUs;
-  cycleTime = currentTimeUs - previousUpdateTimeUs;
+  int32_t cycleTime = currentTimeUs - previousUpdateTimeUs;
   previousUpdateTimeUs = currentTimeUs;
 
   //PID_Calculation(rcCommand[PITCH], imu_pitch, bmi270.gyroADCf[Y]);
@@ -94,8 +86,8 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
   //***********************************//
 
   /****************** PI_speed + PD_angle regulator *****************/
-  targetSpeed = constrain(rcCommand[PITCH], -MAX_SPEED, MAX_SPEED);
-  steering = constrain((int)rcCommand[ROLL]>>2, -MAX_STEERING, MAX_STEERING);
+  int16_t targetSpeed = constrain(rcCommand[PITCH], -MAX_SPEED, MAX_SPEED);
+  int16_t steering = constrain((int)rcCommand[ROLL]>>2, -MAX_STEERING, MAX_STEERING);
   steering = FLIGHT_MODE(SIMPLE_MODE) ? (steering*2/3) : steering;
 
   actualSpeed = (actualMotorSpeed[1] - actualMotorSpeed[0])/2;  // Positive: forward
@@ -133,12 +125,12 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
   #endif
   int16_t angleError =  targetAngle - currAngle; //16 bits is ok here
 
-  acceleration_tmp = // PTerm - DTerm
+  int16_t acceleration = // PTerm - DTerm
         (((int32_t)angleError * pid.pid[PIDANGLE].P8)>>4)                      // 32 bits is needed for calculation: error*P8 could exceed 32768   16 bits is ok for result
         - (((int32_t)bmi270.gyroADCf[Y] * pid.pid[PIDANGLE].D8)>>5);     // 32 bits is needed for calculation
 
-  //static float speed = 0.0f;
-  speed_tmp = constrain(speed_tmp + ((float)acceleration_tmp * (float)cycleTime * 0.000001f), -MAX_SPEED, MAX_SPEED);
+  static float speed = 0.0f;
+  speed = constrain(speed + ((float)acceleration * (float)cycleTime * 0.000001f), -MAX_SPEED, MAX_SPEED);
 
 
   /**** rise mode ****/
@@ -149,6 +141,8 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
   static uint8_t risePhase = 2; // to prevent rising without switching off before
   float dynK = 0.0f;
   if(ARMING_FLAG(ARMED)) {
+    gpioPinWrite(Step_left_EN, _DEF_LOW);   // Enable motors
+    gpioPinWrite(Step_right_EN, _DEF_LOW);   // Enable motors
     int16_t currAbsAngle = abs(currAngle);
     if(currAbsAngle < 250) {  // if angle less than 25 degree
       dynK = 1.0f;
@@ -164,37 +158,39 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
         static float riseSpeed = 0;
         if(risePhase == 0) { // get direct acceleration
           riseSpeed = constrain(riseSpeed + (0.7f * RISE_SPEED_K), 0, MAX_RISE_SPEED);
-          speed_tmp = (currAngle > 0) ? riseSpeed : -riseSpeed; // forward direction
+          speed = (currAngle > 0) ? riseSpeed : -riseSpeed; // forward direction
           if(riseSpeed >= MAX_RISE_SPEED) {
             riseSpeed = 0.0f; // force stop (it will throw up the robot) and prepare for next phase in reverse
             risePhase = 1;
           }
         } else if(risePhase == 1) { // get reversed acceleration to rise
           riseSpeed = constrain(riseSpeed + (0.85f * RISE_SPEED_K), 0, MAX_REVERSED_RISE_SPEED);
-          speed_tmp = (currAngle > 0) ? -riseSpeed : riseSpeed; // backward direction
+          speed = (currAngle > 0) ? -riseSpeed : riseSpeed; // backward direction
           if(riseSpeed >= MAX_REVERSED_RISE_SPEED) {
             risePhase = 2;
           }
         } else if(risePhase == 2) { // prepare for the next rise
           riseSpeed = 0.0f;
-          speed_tmp = 0.0f;
+          speed = 0.0f;
         }
         steering = 0; // to prevent turning during auto rising
 
       } else { // if manual mode for rising
-        speed_tmp = constrain(-targetSpeed/2, -MAX_SPEED/2, MAX_SPEED/2);
+        speed = constrain(-targetSpeed/2, -MAX_SPEED/2, MAX_SPEED/2);
         steering = (abs(targetSpeed) < 100) ? steering/2 : 0; // to prevent turning during acceleration
         risePhase = 0; // reset rise phase
       }
     }
 
   } else { // turn off the motors
-    speed_tmp = 0.0f;
+    gpioPinWrite(Step_left_EN, _DEF_HIGH);   // Disable motors
+    gpioPinWrite(Step_right_EN, _DEF_HIGH);   // Disable motors
+    speed = 0.0f;
     steering = 0;
     risePhase = 2; // to prevent rising without switching off before
   }
 
-  outputSpeed = constrain(speed_tmp * dynK, -MAX_SPEED, MAX_SPEED); ;
+  int16_t outputSpeed = constrain(speed * dynK, -MAX_SPEED, MAX_SPEED); ;
 
   // to don't lost a control on big speeds and not overlimit the MAX_SPEED
   if((abs(outputSpeed) + abs(steering)) > MAX_SPEED) {
