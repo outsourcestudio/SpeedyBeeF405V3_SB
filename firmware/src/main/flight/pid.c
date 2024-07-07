@@ -79,8 +79,6 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
   int32_t cycleTime = currentTimeUs - previousUpdateTimeUs;
   previousUpdateTimeUs = currentTimeUs;
 
-  //PID_Calculation(rcCommand[PITCH], imu_pitch, bmi270.gyroADCf[Y]);
-
   //***********************************//
   //****       BalancingWii       *****//
   //***********************************//
