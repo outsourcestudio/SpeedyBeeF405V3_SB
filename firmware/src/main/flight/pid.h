@@ -55,6 +55,22 @@ typedef struct pid_s {
 
   float POSHOLD_P;
 
+  int16_t error;
+  timeUs_t previousUpdateTimeUs;
+  int32_t cycleTime;
+  int16_t targetSpeed;
+  int16_t steering;
+  float positionError;
+  float actualAveragedSpeed;
+  int16_t angleError;
+  int16_t acceleration;
+  float speed;
+  int16_t angleErrorI;
+  int16_t speedErrorI;
+  int16_t targetAngle;
+  int16_t currAngle;
+  int16_t outputSpeed;
+
 } pid_t;
 
 
