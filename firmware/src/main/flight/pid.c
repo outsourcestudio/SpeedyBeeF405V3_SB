@@ -55,10 +55,10 @@ void Reset_All_PID_Integrator(void)
 
 void pidInit(void)
 {
-  pid.POSHOLD_P = 2.0f;
+  pid.POSHOLD_P = 60.0f;
 
   pid.pid[PIDSPEED].P8    = 80;   pid.pid[PIDSPEED].I8    = 0; pid.pid[PIDSPEED].D8    =  0;
-  pid.pid[PIDANGLE].P8    = 60;   pid.pid[PIDANGLE].I8    = 0; pid.pid[PIDANGLE].D8    = 30;
+  pid.pid[PIDANGLE].P8    = 70;   pid.pid[PIDANGLE].I8    = 0; pid.pid[PIDANGLE].D8    = 40;
 
 
   pid.pid[PIDPOS].P8  = pid.POSHOLD_P * 100;
@@ -116,7 +116,7 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
 
 
   /**** PD_angle regulator ****/
-  pid.currAngle = (int16_t)attitude.values.pitch - 9;// + conf.angleTrim[CURRENT_AXIS];
+  pid.currAngle = (int16_t)attitude.values.pitch - 40;// + conf.angleTrim[CURRENT_AXIS];
   pid.gyro_pitch = bmi270.gyroADCf[Y] * 10;
   #ifdef INVERT_CURRENT_AXIS
     pid.currAngle = -pid.currAngle;
