@@ -55,6 +55,8 @@ typedef struct pid_s {
 
   float POSHOLD_P;
 
+  int32_t gyro_pitch;
+
   int16_t error;
   timeUs_t previousUpdateTimeUs;
   int32_t cycleTime;

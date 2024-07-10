@@ -64,7 +64,7 @@ uint8_t subPeriodIndex[2];       // index for subperiodPaddings
 
 #define ZERO_SPEED  65535
 #define MAX_ACCEL   4
-#define REVERSE_MOTORS_DIRECTION
+//#define REVERSE_MOTORS_DIRECTION
 
 
 // Divided into 8 sub-periods to increase the resolution at high speeds (short periods)

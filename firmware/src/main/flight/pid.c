@@ -58,7 +58,7 @@ void pidInit(void)
   pid.POSHOLD_P = 2.0f;
 
   pid.pid[PIDSPEED].P8    = 80;   pid.pid[PIDSPEED].I8    = 0; pid.pid[PIDSPEED].D8    =  0;
-  pid.pid[PIDANGLE].P8    = 40;   pid.pid[PIDANGLE].I8    = 0; pid.pid[PIDANGLE].D8    = 30;
+  pid.pid[PIDANGLE].P8    = 60;   pid.pid[PIDANGLE].I8    = 0; pid.pid[PIDANGLE].D8    = 30;
 
 
   pid.pid[PIDPOS].P8  = pid.POSHOLD_P * 100;
@@ -70,15 +70,11 @@ void pidInit(void)
   pid.speed = 0.0f;
 }
 
-#define INVERT_CURRENT_AXIS
+//#define INVERT_CURRENT_AXIS
 
 // Function for loop trigger
 void taskMainPidLoop(timeUs_t currentTimeUs)
 {
-  int16_t imu_pitch;
-
-	imu_pitch = (int16_t)attitude.values.pitch;
-
   pid.cycleTime = currentTimeUs - pid.previousUpdateTimeUs;
   pid.previousUpdateTimeUs = currentTimeUs;
 
@@ -88,7 +84,7 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
 
   /****************** PI_speed + PD_angle regulator *****************/
   pid.targetSpeed = constrain(rcCommand[PITCH], -MAX_SPEED, MAX_SPEED);
-  pid.steering = constrain((int)rcCommand[ROLL]>>2, -MAX_STEERING, MAX_STEERING);
+  pid.steering = constrain((int)-rcCommand[ROLL]>>2, -MAX_STEERING, MAX_STEERING);
   pid.steering = FLIGHT_MODE(SIMPLE_MODE) ? (pid.steering*2/3) : pid.steering;
 
   actualSpeed = (actualMotorSpeed[1] - actualMotorSpeed[0])/2;  // Positive: forward
@@ -104,8 +100,8 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
 
 
   /**** PI_speed regulator ****/
-  static float actualAveragedSpeed = 0.0f;
-  actualAveragedSpeed = actualAveragedSpeed * 0.92f + (float)actualSpeed * 0.08f;
+  //static float actualAveragedSpeed = 0.0f;
+  pid.actualAveragedSpeed = pid.actualAveragedSpeed * 0.92f + (float)actualSpeed * 0.08f;
   pid.error = pid.targetSpeed - pid.actualAveragedSpeed -(pid.positionError * pid.pid[PIDPOS].P8 * 0.01f);  //16 bits is ok here
 
   pid.speedErrorI = constrain(pid.speedErrorI + (int16_t)(((int32_t)pid.error * pid.cycleTime)>>11), -20000, 20000);    //16 bits is ok here
@@ -120,15 +116,17 @@ void taskMainPidLoop(timeUs_t currentTimeUs)
 
 
   /**** PD_angle regulator ****/
-  pid.currAngle = imu_pitch;// + conf.angleTrim[CURRENT_AXIS];
+  pid.currAngle = (int16_t)attitude.values.pitch - 9;// + conf.angleTrim[CURRENT_AXIS];
+  pid.gyro_pitch = bmi270.gyroADCf[Y] * 10;
   #ifdef INVERT_CURRENT_AXIS
     pid.currAngle = -pid.currAngle;
+    pid.gyro_pitch = -pid.gyro_pitch;
   #endif
   pid.angleError =  pid.targetAngle - pid.currAngle; //16 bits is ok here
 
   pid.acceleration = // PTerm - DTerm
         (((int32_t)pid.angleError * pid.pid[PIDANGLE].P8)>>4)                      // 32 bits is needed for calculation: error*P8 could exceed 32768   16 bits is ok for result
-        - (((int32_t)bmi270.gyroADCf[Y] * pid.pid[PIDANGLE].D8)>>5);     // 32 bits is needed for calculation
+        - (((int32_t)pid.gyro_pitch * pid.pid[PIDANGLE].D8)>>5);     // 32 bits is needed for calculation
 
   //static float speed = 0.0f;
   pid.speed = constrain(pid.speed + ((float)pid.acceleration * (float)pid.cycleTime * 0.000001f), -MAX_SPEED, MAX_SPEED);
